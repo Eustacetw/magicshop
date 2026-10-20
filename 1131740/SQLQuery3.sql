@@ -1,0 +1,2 @@
+﻿ALTER TABLE TableProducts1131740 ADD AllPlansData NVARCHAR(MAX) NULL;
+GO

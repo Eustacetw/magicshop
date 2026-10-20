@@ -1,0 +1,22 @@
+# Visual Studio / .NET build output and local settings
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+*.rsuser
+*.log
+
+# Local databases and backups
+*.mdf
+*.ldf
+*.bak
+*.sqlite
+*.db
+
+# Secrets (never commit real connection strings or keys)
+appsettings.Production.json
+appsettings.Local.json
+secrets.json
+.env

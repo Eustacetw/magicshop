@@ -1,0 +1,555 @@
+﻿@using Microsoft.AspNetCore.Http
+@using System.Text.Json
+@model List<_1131740.Models.OrderLog>
+@{
+    Layout = null;
+    var member = ViewBag.Member as _1131740.Models.Member;
+
+    int cartCount = 0;
+    var cartJson = Context.Session.GetString("Cart");
+    if (!string.IsNullOrEmpty(cartJson))
+    {
+        try
+        {
+            var cartList = JsonSerializer.Deserialize<List<_1131740.Models.CartItem>>(cartJson);
+            cartCount = cartList?.Sum(x => x.Quantity) ?? 0;
+        }
+        catch { }
+    }
+}
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>顧客詳細面板 - @member.Name</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            background-color: #f4f7f6;
+            font-family: "Microsoft JhengHei", sans-serif;
+            padding-bottom: 60px;
+        }
+
+        .header-section {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 15px 0;
+            margin-bottom: 30px;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 25px;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        .local-search-bar {
+            position: relative;
+            width: 300px;
+        }
+
+            .local-search-bar input {
+                border-radius: 30px;
+                padding: 8px 15px 8px 40px;
+                background: white;
+                border: 1px solid #dee2e6;
+                font-size: 14px;
+                width: 100%;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+                transition: 0.2s;
+            }
+
+                .local-search-bar input:focus {
+                    border-color: #5c7cfa;
+                    outline: none;
+                    box-shadow: 0 0 0 0.2rem rgba(92, 124, 250, 0.25);
+                }
+
+            .local-search-bar i {
+                position: absolute;
+                left: 15px;
+                top: 11px;
+                color: #adb5bd;
+            }
+
+        .month-selector {
+            cursor: pointer;
+            border-radius: 8px;
+            padding: 5px 35px 5px 15px;
+            font-weight: bold;
+            color: #5c7cfa;
+            border: 1px solid #5c7cfa;
+            background-color: #f8faff;
+            transition: 0.2s;
+        }
+
+            .month-selector:focus {
+                box-shadow: 0 0 0 0.2rem rgba(92, 124, 250, 0.25);
+                border-color: #5c7cfa;
+                outline: none;
+            }
+
+        .info-card {
+            background: white;
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: none;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .order-box {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.04);
+            margin-bottom: 20px;
+            overflow: hidden;
+            border: 1px solid #eef2f5;
+        }
+
+        .order-box-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #edf2f7;
+        }
+
+        .credential-zone {
+            background-color: #fff5f5;
+            border: 1px dashed #feb2b2;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .data-box {
+            background: white;
+            border: 1px solid #fee2e2;
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-section">
+        <div class="container header-content">
+
+            <div class="d-flex align-items-center me-5">
+                <a href="/Shop/Product" class="me-4">
+                    <img src="/pictures/17403678683551176BW.jpg" alt="MagicShop Logo" style="height: 45px; object-fit: contain;">
+                </a>
+                <div class="border-start ps-4 d-flex gap-4">
+                    <div>
+                        <div class="text-muted small">歡迎回來, @(Context.Session.GetString("Username") ?? "訪客")</div>
+                        <div class="fw-bold">累積消費：<span class="text-danger">$@(Context.Session.GetInt32("TotalConsumed") ?? 0)</span></div>
+                    </div>
+                    <div class="border-start ps-3">
+                        <div class="text-muted small">測試用商城餘額 (點擊可儲值)</div>
+                        <a href="/Shop/AddTestMoney" class="text-decoration-none text-success fw-bold" title="點擊一鍵補充 $5000 測試金">
+                            <i class="fa-solid fa-wallet me-1"></i>$@(Context.Session.GetInt32("Balance") ?? 10000)
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nav-links align-items-center me-auto">
+                <a href="/Shop/Product" class="text-muted text-decoration-none">探索</a>
+                <a href="/Shop/OrderHistory" class="text-muted text-decoration-none">訂單記錄</a>
+                <a href="/Shop/Contact" class="text-muted text-decoration-none">聯絡客服</a>
+
+                @if (Context.Session.GetString("Username") == "admin")
+                {
+                    <div class="d-flex align-items-center gap-2 ms-3 border-start ps-3 border-secondary-subtle">
+                        <a href="/Admin/Admin" class="btn btn-sm btn-danger fw-bold rounded-pill px-3 shadow-sm">
+                            <i class="fa-solid fa-box-open"></i> 編輯商品
+                        </a>
+                        <a href="/CustomerManager/Customer" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 shadow-sm">
+                            <i class="fa-solid fa-users-gear"></i> 顧客管理
+                        </a>
+                    </div>
+                }
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <a href="/Shop/Cart" class="btn p-1 border-0 position-relative text-dark ms-2">
+                    <i class="fa-solid fa-cart-shopping fs-4"></i>
+                    @if (cartCount > 0)
+                    {
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            @cartCount
+                        </span>
+                    }
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="container" style="max-width: 1000px;">
+
+        <div class="d-flex align-items-center mb-4">
+            <h2 class="fw-bold m-0 text-dark"><i class="fa-solid fa-address-card me-2 text-info"></i>顧客詳細內容面板</h2>
+            <a href="/CustomerManager/Customer" class="btn btn-outline-secondary rounded-pill ms-auto fw-bold shadow-sm">
+                <i class="fa-solid fa-arrow-left me-1"></i> 返回名單
+            </a>
+        </div>
+
+        <div class="info-card shadow-sm border border-light">
+            <h5 class="fw-bold border-bottom pb-2 mb-3 text-secondary"><i class="fa-solid fa-user me-1"></i>基本資產摘要</h5>
+            <div class="row text-center">
+                <div class="col-md-3 border-end">
+                    <div class="text-muted small">登入帳號 (主鍵)</div>
+                    <div class="fs-5 fw-bold text-dark">@member.Username</div>
+                </div>
+                <div class="col-md-3 border-end">
+                    <div class="text-muted small">顧客姓名</div>
+                    <div class="fs-5 fw-bold text-primary">@member.Name</div>
+                </div>
+                <div class="col-md-3 border-end">
+                    <div class="text-muted small">目前賬戶餘額</div>
+                    <div class="fs-5 fw-bold text-success">NT$ @((member.Balance ?? 0).ToString("N0"))</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">歷史總消費額</div>
+                    <div class="fs-5 fw-bold text-danger">NT$ @((member.TotalConsumed ?? 0).ToString("N0"))</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-dark m-0">
+                    <i class="fa-solid fa-chart-line text-primary me-2"></i>顧客每月消費趨勢
+                </h5>
+                <select id="monthSelector" class="form-select w-auto month-selector shadow-sm"></select>
+            </div>
+            <div style="height: 260px; position: relative;">
+                <canvas id="purchaseChart"></canvas>
+            </div>
+        </div>
+
+        <div id="emptyMonthMessage" class="text-center py-4 bg-white rounded-3 shadow-sm border border-light" style="display: none; margin-bottom: 25px;">
+            <i class="fa-solid fa-calendar-xmark text-muted mb-2" style="font-size: 35px;"></i>
+            <h6 class="text-muted m-0">該顧客在此月份沒有任何訂單紀錄。</h6>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-end mb-3 mt-4">
+            <h4 class="fw-bold text-dark m-0"><i class="fa-solid fa-box-open text-secondary me-2"></i>該顧客歷史下單與儲值帳密</h4>
+
+            <div class="local-search-bar">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="localSearchInput" placeholder="搜尋商品名稱或單號...">
+            </div>
+        </div>
+
+        @if (Model == null || !Model.Any())
+        {
+            <div class="text-center py-5 bg-white rounded-3 shadow-sm border border-light info-card">
+                <i class="fa-solid fa-folder-open text-muted mb-3" style="font-size: 50px;"></i>
+                <h5 class="text-muted">該位顧客目前沒有任何商城下單紀錄。</h5>
+            </div>
+        }
+        else
+        {
+            @foreach (var order in Model)
+            {
+                var allProductNames = string.Join(" ", order.Items.Select(x => x.ProductName));
+
+                <div class="order-box-wrapper" data-raw-date="@order.OrderDate" data-order-no="@order.OrderNo" data-product-names="@allProductNames">
+                    <div class="order-box shadow-sm">
+                        <div class="order-box-header d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-muted small">單號：</span><strong class="text-dark me-3">@order.OrderNo</strong>
+                                <span class="text-muted small">時間：</span><span class="text-secondary">@order.OrderDate</span>
+                            </div>
+                            <div>
+                                @if (order.Status.Contains("退款"))
+                                {
+                                    <span class="badge bg-secondary fw-bold px-3 py-2"><i class="fa-solid fa-rotate-left me-1"></i>已退款</span>
+                                }
+                                else if (order.Status == "發貨成功")
+                                {
+                                    <span class="badge bg-success fw-bold px-3 py-2"><i class="fa-solid fa-circle-check me-1"></i>發貨成功</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark fw-bold px-3 py-2"><i class="fa-solid fa-clock me-1"></i>等待發貨</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="p-3">
+                            @foreach (var subItem in order.Items)
+                            {
+                                <div class="d-flex align-items-start gap-3 mb-3 pb-3 border-bottom border-light">
+                                    <img src="@subItem.ImageUrl" alt="" style="width: 65px; height: 65px; object-fit: cover; border-radius: 8px;">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <div class="fw-bold text-dark fs-5">@subItem.ProductName</div>
+                                            <div class="fw-bold text-dark">NT$ @subItem.SubTotal.ToString("N0")</div>
+                                        </div>
+                                        <div class="text-primary small fw-bold mb-2">@subItem.SelectedPlan (購買數量: @subItem.Quantity)</div>
+
+                                        <div class="credential-zone shadow-sm">
+                                            <div class="text-danger fw-bold mb-2"><i class="fa-solid fa-clipboard-list me-1"></i>顧客填寫之結帳資料：</div>
+
+                                            <div class="data-box">
+                                                <div class="text-secondary small fw-bold border-bottom pb-1 mb-2"><i class="fa-solid fa-address-book me-1"></i>聯絡人資訊</div>
+                                                <div class="row g-2 text-dark small">
+                                                    <div class="col-md-4"><strong>真實姓名：</strong> @(subItem.RealName ?? "未提供")</div>
+                                                    <div class="col-md-4"><strong>聯絡電話：</strong> @(subItem.Phone ?? "未提供")</div>
+                                                    <div class="col-md-4"><strong>Email 信箱：</strong> @(subItem.Email ?? "未提供")</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="data-box mt-2">
+                                                <div class="text-secondary small fw-bold border-bottom pb-1 mb-2"><i class="fa-solid fa-gamepad me-1"></i>遊戲儲值資訊</div>
+                                                <div class="row g-2 text-dark small">
+                                                    <div class="col-md-4"><strong>遊戲暱稱：</strong> <span class="bg-light px-2 py-1 border rounded text-secondary">@(subItem.GameNickname ?? "無")</span></div>
+                                                    <div class="col-md-4"><strong>登入帳號：</strong> <code>@(subItem.PlayerUID ?? subItem.GameAccount ?? "未提供")</code></div>
+                                                    <div class="col-md-4"><strong>登入密碼：</strong> <code class="text-danger fs-6">@(subItem.GamePassword ?? "無密碼")</code></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <div class="text-muted small">付款方式：<span class="badge bg-light text-dark border">@order.PaymentMethod</span></div>
+
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="fs-5 fw-bold text-danger me-2">實付總額: NT$ @order.TotalAmount.ToString("N0")</div>
+
+                                    @if (order.Status == "等待發貨")
+                                    {
+                                        <form action="/CustomerManager/Fulfill" method="post" class="m-0">
+                                            <input type="hidden" name="orderNo" value="@order.OrderNo" />
+                                            <input type="hidden" name="username" value="@order.Username" />
+                                            <button type="submit" class="btn btn-success fw-bold rounded-pill shadow-sm px-3 btn-sm" onclick="return confirm('確定已在遊戲內將此商品儲值進去，要執行發貨嗎？');">
+                                                <i class="fa-solid fa-truck-ramp-box me-1"></i> 發貨
+                                            </button>
+                                        </form>
+                                    }
+
+                                    @if (!order.Status.Contains("退款"))
+                                    {
+                                        <button type="button" class="btn btn-warning text-dark fw-bold rounded-pill shadow-sm px-3 btn-sm" onclick="processRefund('@order.OrderNo', '@order.Username', @order.TotalAmount)">
+                                            <i class="fa-solid fa-hand-holding-dollar me-1"></i> 退款
+                                        </button>
+                                    }
+
+                                    <form action="/CustomerManager/DeleteOrder" method="post" class="m-0">
+                                        <input type="hidden" name="orderNo" value="@order.OrderNo" />
+                                        <input type="hidden" name="username" value="@order.Username" />
+                                        <button type="submit" class="btn btn-outline-danger fw-bold rounded-pill shadow-sm px-3 btn-sm" onclick="return confirm('⚠️ 確定要永久刪除這筆訂單與帳密紀錄嗎？此動作無法復原！');">
+                                            <i class="fa-solid fa-trash-can"></i> 刪除
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        async function processRefund(orderNo, username, amount) {
+            if (!confirm(`確定要退款嗎？這將會把 NT$ ${amount} 退回該顧客的商城餘額中。`)) {
+                return; 
+            }
+
+            try {
+
+                const formData = new FormData();
+                formData.append('orderNo', orderNo);
+                formData.append('username', username);
+                formData.append('amount', amount);
+
+
+                const response = await fetch('/CustomerManager/RefundOrder', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    alert('退款成功！');
+                    window.location.reload(); 
+                } else {
+                    alert('退款失敗，請檢查後端錯誤。');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('系統發生錯誤，無法執行退款程序。');
+            }
+        }
+
+
+        const rawOrders = [
+            @if (Model != null)
+            {
+                        foreach (var order in Model)
+                        {
+                                    <text>{ date: "@order.OrderDate", amount: @order.TotalAmount, status: "@order.Status" },</text>
+                        }
+            }
+        ];
+
+        function parseOrderDate(dateStr) {
+            if (!dateStr) return null;
+            const matches = dateStr.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+            if (matches) {
+                return {
+                    year: parseInt(matches[1]),
+                    month: parseInt(matches[2]) - 1,
+                    day: parseInt(matches[3])
+                };
+            }
+            const d = new Date(dateStr.split(' ')[0]);
+            if (!isNaN(d.getTime())) {
+                return { year: d.getFullYear(), month: d.getMonth(), day: d.getDate() };
+            }
+            return null;
+        }
+
+
+        const monthSelector = document.getElementById('monthSelector');
+        const now = new Date();
+        for (let i = 0; i < 12; i++) {
+            const targetDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const ymValue = `${targetDate.getFullYear()}-${String(targetDate.getMonth() + 1).padStart(2, '0')}`;
+
+            const option = document.createElement('option');
+            option.value = ymValue;
+            option.text = `${targetDate.getFullYear()} 年 ${targetDate.getMonth() + 1} 月`;
+            monthSelector.appendChild(option);
+        }
+
+        const ctx = document.getElementById('purchaseChart');
+        let purchaseChart = null;
+
+        if(ctx) {
+            const gradientBg = ctx.getContext('2d').createLinearGradient(0, 0, 0, 250);
+            gradientBg.addColorStop(0, 'rgba(92, 124, 250, 0.25)');
+            gradientBg.addColorStop(1, 'rgba(92, 124, 250, 0.00)');
+
+            purchaseChart = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '當日消費金額',
+                        data: [],
+                        borderColor: '#5c7cfa',
+                        backgroundColor: gradientBg,
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#5c7cfa',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { return ` 消費金額: NT$ ${context.parsed.y.toLocaleString()}`; } } } },
+                    scales: { x: { grid: { display: false } }, y: { beginAtZero: true, ticks: { callback: function(value) { return '$' + value.toLocaleString(); } } } }
+                }
+            });
+        }
+
+        function updateView() {
+            const selectedYM = monthSelector ? monthSelector.value : "";
+            const searchKeyword = document.getElementById('localSearchInput').value.toLowerCase();
+
+            if(purchaseChart && selectedYM) {
+                const [yearStr, monthStr] = selectedYM.split('-');
+                const selectedYear = parseInt(yearStr);
+                const selectedMonth = parseInt(monthStr) - 1;
+
+                const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+                const dailyAmounts = new Array(daysInMonth).fill(0);
+                const chartLabels = [];
+                for (let i = 1; i <= daysInMonth; i++) chartLabels.push(`${i}日`);
+
+                rawOrders.forEach(order => {
+                    const pDate = parseOrderDate(order.date);
+                    if (pDate && pDate.year === selectedYear && pDate.month === selectedMonth) {
+                        if (!order.status.includes("失敗") && !order.status.includes("取消") && !order.status.includes("退款")) {
+                            dailyAmounts[pDate.day - 1] += order.amount;
+                        }
+                    }
+                });
+
+                purchaseChart.data.labels = chartLabels;
+                purchaseChart.data.datasets[0].data = dailyAmounts;
+                purchaseChart.update();
+            }
+
+            let hasVisibleCards = false;
+            document.querySelectorAll('.order-box-wrapper').forEach(card => {
+                const pDate = parseOrderDate(card.getAttribute('data-raw-date'));
+                const orderNo = card.getAttribute('data-order-no').toLowerCase();
+                const productNames = card.getAttribute('data-product-names').toLowerCase();
+
+                let cardYM = "";
+                if (pDate) { cardYM = `${pDate.year}-${String(pDate.month + 1).padStart(2, '0')}`; }
+
+                let isMatch = false;
+                if (searchKeyword.length > 0) {
+                    if (orderNo.includes(searchKeyword) || productNames.includes(searchKeyword)) {
+                        isMatch = true;
+                    }
+                } else {
+                    if (cardYM === selectedYM) {
+                        isMatch = true;
+                    }
+                }
+
+                if (isMatch) {
+                    card.style.display = 'block';
+                    hasVisibleCards = true;
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            const emptyMsg = document.getElementById('emptyMonthMessage');
+            if (emptyMsg) {
+                emptyMsg.style.display = (hasVisibleCards || searchKeyword.length > 0) ? 'none' : 'block';
+            }
+        }
+
+        if(monthSelector) monthSelector.addEventListener('change', updateView);
+        document.getElementById('localSearchInput').addEventListener('input', updateView);
+
+        updateView();
+    </script>
+</body>
+</html>

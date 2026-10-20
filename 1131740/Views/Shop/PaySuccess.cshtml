@@ -1,0 +1,158 @@
+﻿@model _1131740.Models.OrderLog
+@{
+    Layout = null;
+
+    string displayOrderNo = ViewBag.OrderNo as string ?? Model?.OrderNo ?? "處理中";
+    int displayAmount = ViewBag.Amount != null ? Convert.ToInt32(ViewBag.Amount) : (Model?.TotalAmount ?? 0);
+    int displayFee = ViewBag.Fee != null ? Convert.ToInt32(ViewBag.Fee) : 0;
+    int displaySubTotal = ViewBag.ItemSubTotal != null ? Convert.ToInt32(ViewBag.ItemSubTotal) : (displayAmount - displayFee);
+}
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>MagicShop - 付款成功</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            background-color: #f4f7f6;
+            font-family: "Microsoft JhengHei", sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+
+        .receipt-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+            border: none;
+            max-width: 600px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .receipt-header {
+            background: #f8fbf9;
+            text-align: center;
+            padding: 35px 20px;
+            border-bottom: 2px dashed #e9ecef;
+        }
+
+        .success-icon {
+            font-size: 65px;
+            color: #2b8a3e;
+            margin-bottom: 15px;
+        }
+
+        .receipt-body {
+            padding: 30px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 15px;
+        }
+
+        .info-label {
+            color: #868e96;
+        }
+
+        .info-value {
+            color: #212529;
+            font-weight: 600;
+        }
+
+        .item-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        .item-line {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="receipt-card">
+        <div class="receipt-header">
+            <i class="fa-solid fa-circle-check success-icon"></i>
+            <h3 class="fw-bold text-dark m-0">交易成立成功</h3>
+            <p class="text-muted small mt-2 mb-0">感謝您的購買，系統已收到您的付款請求！</p>
+        </div>
+
+        <div class="receipt-body">
+            <h5 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-receipt me-1"></i> 款項訂單資訊</h5>
+
+            <div class="info-row">
+                <span class="info-label">訂單單號</span>
+                <span class="info-value text-primary">@displayOrderNo</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">付款管道</span>
+                <span class="info-value">@(Model?.PaymentMethod ?? "商城餘額支付")</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">交易狀態</span>
+                <span class="info-value"><span class="badge bg-success text-white px-2 py-1">付款成功</span></span>
+            </div>
+
+            @if (Model != null && Model.Items != null && Model.Items.Any())
+            {
+                <div class="item-box">
+                    <div class="fw-bold small text-muted border-bottom pb-2 mb-2">購買品項細明</div>
+                    @foreach (var item in Model.Items)
+                    {
+                        <div class="item-line">
+                            <span class="text-dark">@item.ProductName (@item.SelectedPlan)</span>
+                            <span class="fw-bold text-secondary">NT$ @item.UnitPrice.ToString("N0") x @item.Quantity</span>
+                        </div>
+                    }
+                </div>
+            }
+
+            <hr class="text-muted my-3">
+
+            <div class="info-row">
+                <span class="info-label">商品小計</span>
+                <span class="info-value text-dark">NT$ @displaySubTotal.ToString("N0")</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">管道手續費</span>
+                <span class="info-value text-secondary">+ NT$ @displayFee.ToString("N0")</span>
+            </div>
+
+            <div class="info-row align-items-center border-top pt-3 mt-2">
+                <span class="fw-bold text-dark fs-5">實際扣款總額</span>
+                <span class="fs-3 fw-bold text-danger">NT$ @displayAmount.ToString("N0")</span>
+            </div>
+
+            <div class="row g-2 mt-4">
+                <div class="col-6">
+                    <a href="/Shop/Product" class="btn btn-primary btn-lg w-100 fw-bold rounded-pill fs-6 py-2">
+                        回商城首頁
+                    </a>
+                </div>
+                <div class="col-6">
+                    <a href="/Shop/OrderHistory" class="btn btn-outline-secondary btn-lg w-100 fw-bold rounded-pill fs-6 py-2">
+                        查看訂單紀錄
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

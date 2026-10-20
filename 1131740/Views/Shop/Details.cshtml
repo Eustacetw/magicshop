@@ -1,0 +1,422 @@
+﻿@using Microsoft.AspNetCore.Http
+@using System.Text.Json
+@model _1131740.Models.Product
+@{
+    Layout = null;
+
+    int cartCount = 0;
+    var cartJson = Context.Session.GetString("Cart");
+    if (!string.IsNullOrEmpty(cartJson))
+    {
+        try
+        {
+            var cartList = JsonSerializer.Deserialize<List<_1131740.Models.CartItem>>(cartJson);
+            cartCount = cartList?.Sum(x => x.Quantity) ?? 0;
+        }
+        catch { }
+    }
+}
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MagicShop - @Model.ProductName 儲值</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: "Microsoft JhengHei", sans-serif;
+            padding-bottom: 90px;
+        }
+
+        .header-section {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 15px 0;
+            margin-bottom: 40px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 25px;
+            font-size: 15px;
+        }
+
+        .search-bar {
+            position: relative;
+            width: 250px;
+        }
+
+            .search-bar input {
+                border-radius: 30px;
+                padding-left: 40px;
+                background: #f1f3f5;
+                border: none;
+            }
+
+            .search-bar i {
+                position: absolute;
+                left: 15px;
+                top: 11px;
+                color: #adb5bd;
+            }
+
+        .game-banner {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .game-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 15px;
+            object-fit: cover;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #343a40;
+            margin-bottom: 15px;
+            border-left: 4px solid #5c7cfa;
+            padding-left: 10px;
+        }
+
+        .plan-radio {
+            display: none;
+        }
+
+        .plan-card {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 15px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            height: 100%;
+        }
+
+            .plan-card:hover {
+                border-color: #bac8ff;
+                background: #f8f9fa;
+            }
+
+        .plan-radio:checked + .plan-card {
+            border-color: #5c7cfa;
+            background: #edf2ff;
+            box-shadow: 0 4px 15px rgba(92,124,250,0.15);
+        }
+
+        .plan-price {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin-top: 5px;
+        }
+
+        .plan-name {
+            font-size: 15px;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .bottom-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+            padding: 15px 0;
+            z-index: 1000;
+        }
+
+        .qty-btn {
+            background: #f1f3f5;
+            border: 1px solid #dee2e6;
+            color: #495057;
+            font-weight: bold;
+            width: 40px;
+            transition: 0.2s;
+        }
+
+            .qty-btn:hover {
+                background: #e9ecef;
+            }
+
+        .qty-input {
+            text-align: center;
+            font-weight: bold;
+            border-left: none;
+            border-right: none;
+            border-color: #dee2e6;
+            width: 60px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-section">
+        <div class="container header-content">
+
+            <div class="d-flex align-items-center">
+                <a href="/Shop/Product" class="me-4">
+                    <img src="/pictures/17403678683551176BW.jpg" alt="MagicShop Logo" style="height: 45px; object-fit: contain;">
+                </a>
+                <div class="border-start ps-4 d-flex gap-4">
+                    <div>
+                        <div class="text-muted small">歡迎回來, @(Context.Session.GetString("Username") ?? "訪客")</div>
+                        <div class="fw-bold">累積消費：<span class="text-danger">$@(Context.Session.GetInt32("TotalConsumed") ?? 0)</span></div>
+                    </div>
+                    <div class="border-start ps-3">
+                        <div class="text-muted small">測試用商城餘額 (點擊可儲值)</div>
+                        <a href="/Shop/AddTestMoney" class="text-decoration-none text-success fw-bold" title="點擊一鍵補充 $5000 測試金">
+                            <i class="fa-solid fa-wallet me-1"></i>$@(Context.Session.GetInt32("Balance") ?? 10000)
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nav-links align-items-center">
+                <a href="/Shop/Product" class="text-muted text-decoration-none">探索</a>
+                <a href="/Shop/OrderHistory" class="text-muted text-decoration-none">訂單記錄</a>
+                <a href="/Shop/Contact" class="text-muted text-decoration-none">聯絡客服</a>
+
+                @if (Context.Session.GetString("Username") == "admin")
+                {
+                    <div class="d-flex align-items-center gap-2 ms-3 border-start ps-3 border-secondary-subtle">
+                        <a href="/Admin/Admin" class="btn btn-sm btn-danger fw-bold rounded-pill px-3 shadow-sm">
+                            <i class="fa-solid fa-box-open"></i> 編輯商品
+                        </a>
+                        <a href="/CustomerManager/Customer" class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 shadow-sm">
+                            <i class="fa-solid fa-users-gear"></i> 顧客管理
+                        </a>
+                    </div>
+                }
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="searchInput" class="form-control" placeholder="搜尋遊戲、點數卡...">
+                </div>
+
+                <a href="/Shop/Cart" class="btn p-1 border-0 position-relative text-dark ms-2">
+                    <i class="fa-solid fa-cart-shopping fs-4"></i>
+                    @if (cartCount > 0)
+                    {
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            @cartCount
+                        </span>
+                    }
+                </a>
+            </div>
+
+        </div>
+    </div>
+    <div class="container d-flex align-items-center">
+        <a href="/Shop/Product" class="text-dark me-3">
+            <i class="fa-solid fa-arrow-left fs-5"> </i><i class="h5 m-0 fw-bold">跳回前頁</i>
+        </a>
+    </div>
+    
+    <div class="container" style="max-width: 800px;">
+        <div class="game-banner">
+            <img src="@Model.ImageUrl" alt="@Model.ProductName" class="game-icon">
+            <div>
+                <span class="badge bg-primary mb-2">@Model.Category</span>
+                <h3 class="fw-bold mb-1">@Model.ProductName</h3>
+                <p class="text-muted mb-0 small">@Model.Description</p>
+            </div>
+        </div>
+
+        <form action="/Shop/AddToCart" method="post" autocomplete="off">
+            <input type="hidden" name="ProductID" value="@Model.ProductID">
+            <input type="hidden" name="ProductName" value="@Model.ProductName">
+            <input type="hidden" name="ImageUrl" value="@Model.ImageUrl">
+
+            @{
+                string defaultPrice = Model.Price.ToString();
+                var plansList = new List<string>();
+
+                if (!string.IsNullOrEmpty(Model.AllPlansData))
+                {
+                    plansList = Model.AllPlansData.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                    if (plansList.Any())
+                    {
+                        var firstParts = plansList.First().Split(',');
+                        if (firstParts.Length == 2)
+                        {
+                            defaultPrice = firstParts[1].Trim();
+                        }
+                    }
+                }
+            }
+
+            <input type="hidden" id="hiddenDefaultPrice" value="@defaultPrice">
+            <input type="hidden" id="hiddenUnitPrice" name="UnitPrice" value="@defaultPrice">
+
+            <div class="mb-4">
+                <div class="section-title">步驟 1：選擇儲值面額</div>
+                <div class="row row-cols-2 row-cols-md-3 g-3">
+
+                    @if (plansList.Any())
+                    {
+                        bool isFirst = true;
+                        foreach (var plan in plansList)
+                        {
+                            var parts = plan.Split(',');
+                            if (parts.Length == 2)
+                            {
+                                var planName = parts[0].Trim();
+                                var planPrice = parts[1].Trim();
+
+                                <div class="col">
+                                    <label class="w-100">
+                                        <input type="radio" name="SelectedPlan" value="@planName" class="plan-radio" onchange="updatePrice(@planPrice)" @(isFirst ? "checked" : "")>
+                                        <div class="plan-card">
+                                            <div class="plan-name">@planName</div>
+                                            <div class="plan-price">NT$ @planPrice</div>
+                                        </div>
+                                    </label>
+                                </div>
+                                isFirst = false;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        <div class="col-12 text-muted">
+                            <i class="fa-solid fa-triangle-exclamation"></i> 管理員尚未設定此遊戲的面額方案。
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="section-title">步驟 2：選擇購買數量</div>
+                <div class="bg-white p-3 rounded-3 shadow-sm border d-flex align-items-center justify-content-between">
+                    <span class="fw-bold text-dark fs-5">欲購買數量</span>
+
+                    <div class="input-group" style="width: 140px;">
+                        <button class="btn qty-btn" type="button" onclick="changeQuantity(-1)"><i class="fa-solid fa-minus"></i></button>
+                        <input type="text" class="form-control qty-input" id="quantityInput" name="Quantity" value="1" readonly>
+                        <button class="btn qty-btn" type="button" onclick="changeQuantity(1)"><i class="fa-solid fa-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-5">
+                <div class="section-title">步驟 3：填寫聯絡與遊戲資訊</div>
+                <div class="bg-white p-4 rounded-3 shadow-sm border">
+
+                    <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-address-card"></i> 聯絡人資訊</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">真實姓名 <span class="text-danger">*</span></label>
+                            <input type="text" name="RealName" class="form-control bg-light" placeholder="請輸入姓名" required autocomplete="off">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">聯絡電話 <span class="text-danger">*</span></label>
+                            <input type="tel" name="Phone" class="form-control bg-light" placeholder="例如: 0912345678" required autocomplete="off">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold small">Email 信箱 <span class="text-danger">*</span></label>
+                            <input type="text" inputmode="email" name="Email" class="form-control bg-light" placeholder="用來接收訂單進度通知" required autocomplete="new-password">
+                        </div>
+                    </div>
+
+                    <hr class="text-muted">
+
+                    <h6 class="fw-bold text-primary mb-3 mt-3"><i class="fa-solid fa-gamepad"></i> 遊戲資訊</h6>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">遊戲暱稱 <span class="text-danger">*</span></label>
+                        <input type="text" name="GameNickname" class="form-control bg-light" placeholder="請輸入遊戲內顯示的名稱" required autocomplete="off">
+                    </div>
+
+                    @if (Model.Category == "UID儲值")
+                    {
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">遊戲 UID <span class="text-danger">*</span></label>
+                            <input type="text" name="PlayerUID" class="form-control bg-light border-primary" placeholder="請輸入準確的 UID 數字 (無需密碼)" required autocomplete="off">
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">遊戲登入帳號 <span class="text-danger">*</span></label>
+                                <input type="text" name="GameAccount" class="form-control bg-light border-danger" placeholder="輸入登入帳號或 Email" required autocomplete="off">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small">遊戲登入密碼 <span class="text-danger">*</span></label>
+                                <input type="password" name="GamePassword" class="form-control bg-light border-danger" placeholder="請注意大小寫" required autocomplete="new-password">
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="bottom-bar">
+                <div class="container d-flex justify-content-between align-items-center" style="max-width: 800px;">
+                    <div>
+                        <div class="text-muted small fw-bold">總計金額</div>
+                        <div class="fs-3 fw-bold text-danger" id="totalPriceDisplay">
+                            NT$ @defaultPrice
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-warning btn-lg fw-bold px-4" style="border-radius: 30px; background-color: #ff9900; border-color: #ff9900; color: white; box-shadow: 0 4px 10px rgba(255, 153, 0, 0.3);">
+                        加入購物車 <i class="fa-solid fa-cart-plus ms-1"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        let priceString = document.getElementById('hiddenDefaultPrice').value;
+        let currentUnitPrice = parseInt(priceString) || 0;
+        let currentQuantity = 1;
+
+        calculateTotal();
+
+        function updatePrice(price) {
+            if(price) {
+                currentUnitPrice = parseInt(price);
+
+                document.getElementById('hiddenUnitPrice').value = currentUnitPrice;
+                calculateTotal();
+            }
+        }
+
+        function changeQuantity(delta) {
+            let newQuantity = currentQuantity + delta;
+            if (newQuantity >= 1 && newQuantity <= 99) {
+                currentQuantity = newQuantity;
+                document.getElementById('quantityInput').value = currentQuantity;
+                calculateTotal();
+            }
+        }
+
+        function calculateTotal() {
+            let total = currentUnitPrice * currentQuantity;
+            document.getElementById('totalPriceDisplay').innerText = 'NT$ ' + total.toLocaleString();
+        }
+    </script>
+</body>
+</html>
